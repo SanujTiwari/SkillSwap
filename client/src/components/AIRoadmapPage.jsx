@@ -1,363 +1,290 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api.js';
 import { useStore } from '../store/useStore.js';
-import { Zap, Sparkles, CheckCircle2, Clock, BookOpen, Layers, ArrowRight, MessageSquare, Send, X, Bot, RefreshCw } from 'lucide-react';
+import { Zap, Sparkles, CheckCircle2, Clock, Layers, Send, X, Bot, RefreshCw } from 'lucide-react';
 
 export default function AIRoadmapPage() {
   const { showToast, activeDemoPersona } = useStore();
   const [roadmaps, setRoadmaps] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // AI Skill Profiler Input
   const [targetRole, setTargetRole] = useState('Full-Stack Engineer');
   const [generating, setGenerating] = useState(false);
 
-  // AI Coach Floating Assistant
   const [coachOpen, setCoachOpen] = useState(false);
   const [coachMessages, setCoachMessages] = useState([
-    { sender: 'ai', text: 'Hello! I am your SkillSwap AI Coach. How can I help you accelerate your learning today?' }
+    { sender: 'ai', text: 'Hello! I\'m your SkillSwap AI Coach. How can I help accelerate your learning today?' }
   ]);
   const [coachInput, setCoachInput] = useState('');
   const [coachLoading, setCoachLoading] = useState(false);
 
-  useEffect(() => {
-    fetchRoadmaps();
-  }, [activeDemoPersona]);
+  useEffect(() => { fetchRoadmaps(); }, [activeDemoPersona]);
 
   const fetchRoadmaps = async () => {
     setLoading(true);
     try {
       const res = await api.get('/roadmaps');
       setRoadmaps(res.data.roadmaps || []);
-    } catch (err) {
-      console.error('Fetch roadmaps error:', err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error('Fetch roadmaps error:', err); }
+    finally { setLoading(false); }
   };
 
   const handleGenerateRoadmap = async () => {
     setGenerating(true);
     try {
-      const res = await api.post('/roadmaps/generate', {
-        targetRole,
-        currentSkills: activeDemoPersona.teach
-      });
-      showToast(`Generated new AI Roadmap for ${targetRole}!`, 'success');
+      await api.post('/roadmaps/generate', { targetRole, currentSkills: activeDemoPersona.teach });
+      showToast(`Generated AI Roadmap for ${targetRole}!`, 'success');
       fetchRoadmaps();
-    } catch (err) {
-      showToast('Failed to generate roadmap', 'error');
-    } finally {
-      setGenerating(false);
-    }
+    } catch (err) { showToast('Failed to generate roadmap', 'error'); }
+    finally { setGenerating(false); }
   };
 
   const handleToggleStageStatus = async (stageId, currentStatus) => {
     const nextStatus = currentStatus === 'COMPLETED' ? 'NOT_STARTED' : currentStatus === 'IN_PROGRESS' ? 'COMPLETED' : 'IN_PROGRESS';
     try {
       await api.put(`/roadmaps/stage/${stageId}`, { status: nextStatus });
-      showToast('Updated stage status', 'success');
+      showToast('Stage updated', 'success');
       fetchRoadmaps();
-    } catch (err) {
-      showToast('Failed to update stage status', 'error');
-    }
+    } catch (err) { showToast('Failed to update stage', 'error'); }
   };
 
   const handleSendCoachMsg = async (e) => {
     e.preventDefault();
     if (!coachInput.trim()) return;
-
     const userText = coachInput;
     setCoachMessages(prev => [...prev, { sender: 'user', text: userText }]);
     setCoachInput('');
     setCoachLoading(true);
-
     try {
       const res = await api.post('/ai/coach', { prompt: userText });
-      const reply = res.data.coachResponse?.reply || 'Stay focused on your active roadmap stage and practice with peer partners!';
+      const reply = res.data.coachResponse?.reply || 'Focus on your active roadmap stage and practice pair coding!';
       setCoachMessages(prev => [...prev, { sender: 'ai', text: reply }]);
     } catch (err) {
-      setCoachMessages(prev => [...prev, { sender: 'ai', text: 'Sorry, I ran into an issue processing your request.' }]);
-    } finally {
-      setCoachLoading(false);
-    }
+      setCoachMessages(prev => [...prev, { sender: 'ai', text: 'Sorry, I ran into an issue.' }]);
+    } finally { setCoachLoading(false); }
   };
 
   const activeRoadmap = roadmaps[0];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 relative">
-      
-      {/* Header & AI Generator Box */}
-      <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-sky-950/40 p-8 border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div className="max-w-3xl space-y-4">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs font-mono font-semibold">
-            <Zap className="w-3.5 h-3.5 text-sky-400" />
-            <span>AI Roadmap & Skill Profiler</span>
-          </div>
+    <div className="space-y-6 animate-fade-in relative">
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight font-heading">
-            Personalized AI Learning Roadmaps & <br />
-            <span className="bg-gradient-to-r from-sky-400 via-teal-300 to-amber-300 bg-clip-text text-transparent">
-              Stage Progress Tracking
-            </span>
-          </h1>
+      {/* ── Hero & Generator ── */}
+      <div className="relative rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-900/30 via-surface-raised to-surface-raised" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-accent-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
+        <div className="relative z-10 p-6 sm:p-10">
+          <div className="max-w-3xl space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-500/10 border border-accent-500/20 text-accent-300 text-xs font-medium">
+              <Zap className="w-3.5 h-3.5" />
+              <span>AI Roadmap Architect</span>
+            </div>
 
-          <p className="text-slate-300 text-sm leading-relaxed">
-            Generate custom learning paths tailored to your career target role. Every stage links directly to recommended peer swap topics, projects, and resources.
-          </p>
+            <h1 className="text-3xl sm:text-4xl font-heading font-bold text-white leading-tight">
+              Personalized <span className="text-gradient-warm">Learning Roadmaps</span>
+            </h1>
 
-          {/* AI Generator Form */}
-          <div className="pt-2 flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              value={targetRole}
-              onChange={(e) => setTargetRole(e.target.value)}
-              placeholder="Target Role (e.g., Full-Stack Engineer, AI Specialist, UI Designer)..."
-              className="flex-1 bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-400"
-            />
-            <button
-              onClick={handleGenerateRoadmap}
-              disabled={generating}
-              className="px-6 py-3 bg-gradient-to-r from-sky-500 to-teal-400 text-slate-950 font-bold rounded-2xl text-sm flex items-center justify-center space-x-2 transition-all shadow-lg shadow-sky-500/20"
-            >
-              {generating ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  <span>Generate New Roadmap</span>
-                </>
-              )}
-            </button>
+            <p className="text-gray-400 text-sm max-w-xl">
+              Generate customized learning paths tailored to your career goals. Track progress step-by-step.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <input
+                type="text"
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                placeholder="Target Role (e.g., Full-Stack Engineer, AI Specialist)..."
+                className="input-field flex-1 !rounded-xl"
+              />
+              <button
+                onClick={handleGenerateRoadmap}
+                disabled={generating}
+                className="btn-primary flex items-center justify-center gap-2 !rounded-xl shrink-0 disabled:opacity-50"
+              >
+                {generating ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    <span>Generate Roadmap</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Active Roadmap Timeline */}
+      {/* ── Active Roadmap ── */}
       {loading ? (
-        <div className="h-96 bg-slate-900/60 rounded-3xl border border-slate-800 animate-pulse p-8" />
+        <div className="h-96 bg-surface-raised rounded-2xl border border-white/[0.04] animate-pulse shimmer" />
       ) : !activeRoadmap ? (
-        <div className="text-center py-16 bg-slate-900/40 rounded-3xl border border-slate-800 p-8 space-y-4">
-          <Layers className="w-12 h-12 text-slate-600 mx-auto" />
-          <h3 className="text-lg font-bold text-slate-300">No active roadmap found</h3>
-          <p className="text-sm text-slate-500">Generate a personalized roadmap above to get started!</p>
+        <div className="text-center py-16 bg-surface-raised rounded-2xl border border-white/[0.04] space-y-3">
+          <Layers className="w-10 h-10 text-gray-700 mx-auto" />
+          <h3 className="text-base font-semibold text-gray-300 font-heading">No roadmap yet</h3>
+          <p className="text-xs text-gray-500">Generate one above to get started!</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          
-          {/* Roadmap Overview Header Card */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-5">
+          {/* Overview Card */}
+          <div className="glass-card rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <span className="text-[10px] font-mono uppercase text-sky-400 tracking-wider">
-                Target Role: {activeRoadmap.targetRole}
+              <span className="text-[10px] font-mono uppercase text-primary-400 font-semibold tracking-wider">
+                Target: {activeRoadmap.targetRole}
               </span>
-              <h2 className="text-2xl font-bold text-white font-heading mt-1">{activeRoadmap.title}</h2>
-              <p className="text-xs text-slate-400 mt-1">{activeRoadmap.description}</p>
+              <h2 className="text-xl font-bold text-white font-heading mt-1">{activeRoadmap.title}</h2>
+              <p className="text-xs text-gray-400 mt-1">{activeRoadmap.description}</p>
             </div>
-
-            {/* Progress Bar */}
-            <div className="w-full md:w-64 bg-slate-950 p-4 rounded-2xl border border-slate-800/80 space-y-2">
+            <div className="w-full md:w-56 p-4 rounded-xl bg-surface-DEFAULT border border-white/[0.04] space-y-2">
               <div className="flex justify-between text-xs font-mono">
-                <span className="text-slate-400">Roadmap Progress</span>
-                <span className="text-teal-300 font-bold">{activeRoadmap.progressPercent}%</span>
+                <span className="text-gray-500">Progress</span>
+                <span className="text-primary-300 font-bold">{activeRoadmap.progressPercent}%</span>
               </div>
-              <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+              <div className="w-full bg-surface-overlay h-2 rounded-full overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-teal-400 to-sky-400 h-full rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-primary-500 to-teal-400 h-full rounded-full transition-all duration-500"
                   style={{ width: `${activeRoadmap.progressPercent}%` }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Timeline Stages List */}
+          {/* Timeline Stages */}
           <div className="space-y-4">
             {activeRoadmap.stages?.map((stage, idx) => {
               const skills = JSON.parse(stage.skillsJson || '[]');
               const resources = JSON.parse(stage.resourcesJson || '[]');
               const projects = JSON.parse(stage.projectsJson || '[]');
-
               const isDone = stage.status === 'COMPLETED';
               const isInProgress = stage.status === 'IN_PROGRESS';
 
               return (
                 <div
                   key={stage.id}
-                  className={`bg-slate-900/80 border rounded-3xl p-6 transition-all ${
-                    isDone
-                      ? 'border-teal-500/40 bg-teal-950/10'
-                      : isInProgress
-                      ? 'border-sky-500/50 shadow-lg shadow-sky-500/5'
-                      : 'border-slate-800'
+                  className={`glass-card rounded-2xl p-5 ${
+                    isDone ? '!border-primary-500/30' : isInProgress ? '!border-teal-500/30 shadow-glow-teal' : ''
                   }`}
                 >
                   <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    
-                    {/* Stage Left Content */}
                     <div className="space-y-3 flex-1">
-                      <div className="flex items-center space-x-3">
-                        <span className="w-8 h-8 rounded-xl bg-slate-950 border border-slate-800 text-teal-400 font-mono font-bold text-sm flex items-center justify-center">
-                          0{idx + 1}
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-lg bg-surface-DEFAULT border border-white/[0.06] text-primary-400 font-mono font-bold text-sm flex items-center justify-center">
+                          {String(idx + 1).padStart(2, '0')}
                         </span>
-                        <h3 className="text-lg font-bold text-white font-heading">{stage.title}</h3>
-
-                        {/* Status Badge */}
-                        <span
-                          className={`px-3 py-0.5 rounded-full text-[10px] font-mono uppercase font-bold ${
-                            isDone
-                              ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                              : isInProgress
-                              ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                              : 'bg-slate-800 text-slate-400'
-                          }`}
-                        >
-                          {stage.status}
+                        <h3 className="text-base font-bold text-white font-heading">{stage.title}</h3>
+                        <span className={`${isDone ? 'badge-primary' : isInProgress ? 'badge-teal' : 'badge'} bg-surface-overlay text-gray-400 border border-white/[0.06] !text-[10px] font-mono uppercase`}>
+                          {stage.status.replace('_', ' ')}
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-300 leading-relaxed pl-11">{stage.objective}</p>
+                      <p className="text-xs text-gray-400 leading-relaxed pl-11">{stage.objective}</p>
 
-                      {/* Skills & Details */}
-                      <div className="pl-11 pt-2 flex flex-wrap gap-4 text-xs">
-                        {/* Skills */}
-                        <div className="flex items-center space-x-2">
-                          <span className="text-[10px] font-mono uppercase text-slate-400">Skills:</span>
+                      <div className="pl-11 pt-1 flex flex-wrap gap-3 text-xs">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           {skills.map((sk, i) => (
-                            <span key={i} className="px-2 py-0.5 rounded bg-slate-950 text-sky-300 font-mono text-[11px] border border-slate-800">
-                              {sk}
-                            </span>
+                            <span key={i} className="badge-primary !text-[10px]">{sk}</span>
                           ))}
                         </div>
-
-                        {/* Hours */}
-                        <div className="flex items-center space-x-1.5 text-slate-400 font-mono text-[11px]">
-                          <Clock className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Est. {stage.estimatedHours} Hours</span>
+                        <div className="flex items-center gap-1.5 text-gray-500 font-mono text-[11px]">
+                          <Clock className="w-3.5 h-3.5 text-accent-400" />
+                          <span>{stage.estimatedHours}h</span>
                         </div>
                       </div>
 
-                      {/* Projects & Resources */}
-                      <div className="pl-11 pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="pl-11 pt-1 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
                         {projects.length > 0 && (
-                          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80">
-                            <span className="text-[10px] font-mono uppercase text-amber-400 block mb-1">
-                              Recommended Project:
-                            </span>
-                            <span className="text-slate-300 font-medium">{projects[0]}</span>
+                          <div className="p-3 rounded-xl bg-surface-DEFAULT border border-white/[0.04]">
+                            <span className="text-[10px] font-mono uppercase text-accent-400 font-semibold block mb-1">Project</span>
+                            <span className="text-gray-300">{projects[0]}</span>
                           </div>
                         )}
                         {resources.length > 0 && (
-                          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80">
-                            <span className="text-[10px] font-mono uppercase text-sky-400 block mb-1">
-                              Learning Resources:
-                            </span>
-                            <span className="text-slate-300 font-medium">{resources.join(', ')}</span>
+                          <div className="p-3 rounded-xl bg-surface-DEFAULT border border-white/[0.04]">
+                            <span className="text-[10px] font-mono uppercase text-primary-400 font-semibold block mb-1">Resources</span>
+                            <span className="text-gray-300">{resources.join(', ')}</span>
                           </div>
                         )}
                       </div>
-
                     </div>
 
-                    {/* Toggle Status Action Button */}
-                    <div>
-                      <button
-                        onClick={() => handleToggleStageStatus(stage.id, stage.status)}
-                        className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center space-x-2 ${
-                          isDone
-                            ? 'bg-teal-500 text-slate-950 hover:bg-teal-400'
-                            : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-                        }`}
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>{isDone ? 'Completed' : 'Mark Progress'}</span>
-                      </button>
-                    </div>
-
+                    <button
+                      onClick={() => handleToggleStageStatus(stage.id, stage.status)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                        isDone ? 'btn-primary' : 'btn-secondary'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{isDone ? 'Completed' : 'Mark Progress'}</span>
+                    </button>
                   </div>
                 </div>
               );
             })}
           </div>
-
         </div>
       )}
 
-      {/* FLOATING AI COACH CHAT WIDGET */}
+      {/* ── Floating AI Coach ── */}
       <div className="fixed bottom-6 right-6 z-50">
         {!coachOpen ? (
           <button
             onClick={() => setCoachOpen(true)}
-            className="p-4 rounded-full bg-gradient-to-r from-teal-500 to-sky-500 text-slate-950 font-bold shadow-2xl shadow-teal-500/30 flex items-center space-x-2 hover:scale-105 transition-transform"
+            className="p-3.5 rounded-full btn-primary !rounded-full shadow-glow-md flex items-center gap-2 hover:scale-105 transition-transform"
           >
-            <Bot className="w-6 h-6" />
+            <Bot className="w-5 h-5" />
             <span className="hidden sm:inline font-mono text-xs uppercase tracking-wider">AI Coach</span>
           </button>
         ) : (
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-80 sm:w-96 shadow-2xl overflow-hidden flex flex-col h-[480px] animate-in slide-in-from-bottom-4">
-            
+          <div className="bg-surface-raised border border-white/[0.08] rounded-2xl w-80 sm:w-96 shadow-elevated overflow-hidden flex flex-col h-[480px] animate-slide-up">
             {/* Header */}
-            <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-              <div className="flex items-center space-x-2.5">
-                <div className="p-2 rounded-xl bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                  <Bot className="w-5 h-5" />
+            <div className="p-4 bg-surface-DEFAULT border-b border-white/[0.06] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-primary-600/15 text-primary-400 border border-primary-500/25">
+                  <Bot className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="font-heading font-bold text-sm text-white">SkillSwap AI Coach</h4>
-                  <span className="text-[10px] text-teal-400 font-mono">24/7 Contextual Assistant</span>
+                  <h4 className="font-heading font-bold text-sm text-white">AI Coach</h4>
+                  <span className="text-[10px] text-primary-400 font-mono">24/7 Assistant</span>
                 </div>
               </div>
-              <button onClick={() => setCoachOpen(false)} className="text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
+              <button onClick={() => setCoachOpen(false)} className="p-1 text-gray-500 hover:text-white rounded-lg hover:bg-white/[0.06]">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Chat History */}
+            {/* Messages */}
             <div className="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
               {coachMessages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[85%] p-3 rounded-2xl leading-relaxed ${
-                      m.sender === 'user'
-                        ? 'bg-teal-500 text-slate-950 font-semibold rounded-br-none'
-                        : 'bg-slate-950 border border-slate-800 text-slate-300 rounded-bl-none'
-                    }`}
-                  >
+                <div key={i} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] p-3 rounded-xl leading-relaxed ${
+                    m.sender === 'user'
+                      ? 'bg-primary-600 text-white font-medium rounded-br-none'
+                      : 'bg-surface-DEFAULT border border-white/[0.04] text-gray-300 rounded-bl-none'
+                  }`}>
                     {m.text}
                   </div>
                 </div>
               ))}
               {coachLoading && (
-                <div className="text-slate-500 text-[10px] font-mono animate-pulse">
-                  AI Coach thinking...
-                </div>
+                <div className="text-gray-500 text-[10px] font-mono animate-pulse">Thinking...</div>
               )}
             </div>
 
-            {/* Form Input */}
-            <form onSubmit={handleSendCoachMsg} className="p-3 bg-slate-950 border-t border-slate-800 flex space-x-2">
+            {/* Input */}
+            <form onSubmit={handleSendCoachMsg} className="p-3 bg-surface-DEFAULT border-t border-white/[0.06] flex gap-2">
               <input
                 type="text"
                 value={coachInput}
                 onChange={(e) => setCoachInput(e.target.value)}
-                placeholder="Ask your learning coach..."
-                className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-400"
+                placeholder="Ask your AI coach..."
+                className="input-field !py-2 !text-xs flex-1"
               />
-              <button
-                type="submit"
-                className="p-2 bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-xl font-bold transition-colors"
-              >
+              <button type="submit" className="p-2 btn-primary !rounded-lg !px-3">
                 <Send className="w-4 h-4" />
               </button>
             </form>
-
           </div>
         )}
       </div>
-
     </div>
   );
 }

@@ -58,7 +58,7 @@ router.post('/book', authenticateToken, async (req, res) => {
         endTime: endDate,
         durationMins: durationMins || 60,
         price: parseFloat(price || 0),
-        meetingUrl: `https://meet.skillswap.dev/room-${req.user.profile?.username || 'user'}-${Date.now().toString(36)}`,
+        meetingUrl: `https://meet.jit.si/skillswap-room-${req.user.profile?.username || 'user'}-${Date.now().toString(36)}`,
         notes,
         aiAgendaJson: JSON.stringify(aiPrep.agenda)
       },
@@ -68,6 +68,27 @@ router.post('/book', authenticateToken, async (req, res) => {
         skill: true
       }
     });
+
+    // Auto-create/ensure conversation thread exists between host and learner
+    const existingConv = await prisma.conversation.findFirst({
+      where: {
+        AND: [
+          { participants: { some: { id: hostId } } },
+          { participants: { some: { id: req.user.id } } }
+        ]
+      }
+    });
+
+    if (!existingConv) {
+      await prisma.conversation.create({
+        data: {
+          participants: {
+            connect: [{ id: hostId }, { id: req.user.id }]
+          },
+          lastMessageAt: new Date()
+        }
+      });
+    }
 
     res.json({ session });
   } catch (error) {

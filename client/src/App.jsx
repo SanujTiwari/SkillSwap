@@ -3,6 +3,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { useStore } from './store/useStore.js';
 import { api } from './lib/api.js';
 import Navbar from './components/Navbar.jsx';
+import AuthModal from './components/AuthModal.jsx';
 import DiscoverPage from './components/DiscoverPage.jsx';
 import AIRoadmapPage from './components/AIRoadmapPage.jsx';
 import SessionsPage from './components/SessionsPage.jsx';
@@ -16,7 +17,6 @@ export default function App() {
   const { activeTab, activeDemoPersona, setCurrentUser, toastMessage } = useStore();
 
   useEffect(() => {
-    // Fetch initial user profile for active demo persona
     api.get(`/users/${activeDemoPersona.username}`)
       .then((res) => {
         if (res.data.user) {
@@ -49,47 +49,53 @@ export default function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-teal-500/30 selection:text-teal-300">
+      <div className="min-h-screen bg-surface-DEFAULT text-gray-100 flex flex-col">
         
         {/* Navigation Bar */}
         <Navbar />
 
-        {/* Dynamic Toast Notifications */}
+        {/* Auth Modal */}
+        <AuthModal />
+
+        {/* Toast Notifications */}
         {toastMessage && (
-          <div className="fixed top-24 right-6 z-50 animate-in slide-in-from-top-4 fade-in">
+          <div className="fixed top-20 right-4 z-50 animate-slide-down">
             <div
-              className={`px-4 py-3 rounded-2xl shadow-2xl border flex items-center space-x-2.5 text-xs font-semibold backdrop-blur-xl ${
+              className={`px-4 py-3 rounded-xl shadow-elevated border flex items-center gap-2.5 text-xs font-medium backdrop-blur-xl ${
                 toastMessage.type === 'success'
-                  ? 'bg-teal-950/90 border-teal-500/40 text-teal-200'
+                  ? 'bg-surface-raised/90 border-success-500/25 text-success-400'
                   : toastMessage.type === 'error'
-                  ? 'bg-rose-950/90 border-rose-500/40 text-rose-200'
-                  : 'bg-slate-900/90 border-slate-700 text-slate-200'
+                  ? 'bg-surface-raised/90 border-danger-500/25 text-danger-400'
+                  : 'bg-surface-raised/90 border-primary-500/25 text-primary-300'
               }`}
             >
-              {toastMessage.type === 'success' && <CheckCircle2 className="w-4 h-4 text-teal-400" />}
-              {toastMessage.type === 'error' && <AlertCircle className="w-4 h-4 text-rose-400" />}
-              {toastMessage.type === 'info' && <Info className="w-4 h-4 text-sky-400" />}
+              {toastMessage.type === 'success' && <CheckCircle2 className="w-4 h-4" />}
+              {toastMessage.type === 'error' && <AlertCircle className="w-4 h-4" />}
+              {toastMessage.type === 'info' && <Info className="w-4 h-4" />}
               <span>{toastMessage.msg}</span>
             </div>
           </div>
         )}
 
-        {/* Main View Container */}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Content */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {renderActivePage()}
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-slate-900 bg-slate-950 py-8 text-center text-xs text-slate-500">
-          <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono">
-            <div className="flex items-center space-x-2">
-              <Sparkles className="w-4 h-4 text-teal-400" />
-              <span>SkillSwap Platform © 2026</span>
+        <footer className="border-t border-white/[0.04] bg-surface-DEFAULT py-6">
+          <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-primary-400" />
+              <span className="text-xs font-semibold text-gray-400">
+                SkillSwap © 2026
+              </span>
             </div>
-            <p>Powered by Node.js, Express, Neon PostgreSQL, Prisma ORM & React JSX</p>
+            <p className="text-xs text-gray-600 font-mono">
+              Built with React · Express · PostgreSQL · Prisma
+            </p>
           </div>
         </footer>
-
       </div>
     </Router>
   );

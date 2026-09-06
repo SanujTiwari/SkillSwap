@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api.js';
 import { useStore } from '../store/useStore.js';
-import { Calendar, Clock, Video, Sparkles, CheckCircle2, Star, MessageSquare, FileText, X, RefreshCw, Award } from 'lucide-react';
+import { Calendar, Clock, Video, Sparkles, CheckCircle2, Star, FileText, X, RefreshCw } from 'lucide-react';
 
 export default function SessionsPage() {
   const { showToast, activeDemoPersona } = useStore();
@@ -9,22 +9,14 @@ export default function SessionsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
 
-  // AI Prep Modal
   const [prepModalSession, setPrepModalSession] = useState(null);
-
-  // AI Summary Modal
   const [summaryModalSession, setSummaryModalSession] = useState(null);
-  const [summaryLoading, setSummaryLoading] = useState(false);
-
-  // Review Modal
   const [reviewModalSession, setReviewModalSession] = useState(null);
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchSessions();
-  }, [activeDemoPersona]);
+  useEffect(() => { fetchSessions(); }, [activeDemoPersona]);
 
   const fetchSessions = async () => {
     setLoading(true);
@@ -49,34 +41,27 @@ export default function SessionsPage() {
   };
 
   const handleGenerateSummary = async (sessionId) => {
-    setSummaryLoading(true);
     try {
       const res = await api.post(`/sessions/${sessionId}/ai-summary`);
-      showToast('AI Post-Session Summary generated!', 'success');
+      showToast('AI Summary generated!', 'success');
       setSummaryModalSession(res.data.session);
       fetchSessions();
     } catch (err) {
       showToast('Failed to generate summary', 'error');
-    } finally {
-      setSummaryLoading(false);
     }
   };
 
   const handleSubmitReview = async () => {
     if (!reviewModalSession) return;
     setReviewSubmitting(true);
-
     try {
       const isHost = reviewModalSession.hostId === activeDemoPersona.id;
       const revieweeId = isHost ? reviewModalSession.learnerId : reviewModalSession.hostId;
-
       await api.post(`/sessions/${reviewModalSession.id}/review`, {
-        revieweeId,
-        rating,
-        comment: reviewComment || 'Great skill swap session! Very informative and helpful.'
+        revieweeId, rating,
+        comment: reviewComment || 'Great skill swap session!'
       });
-
-      showToast('Review submitted! Thank you.', 'success');
+      showToast('Review submitted!', 'success');
       setReviewModalSession(null);
       setReviewComment('');
       fetchSessions();
@@ -87,45 +72,47 @@ export default function SessionsPage() {
     }
   };
 
-  const filteredSessions = sessions.filter(s => {
-    if (filter === 'ALL') return true;
-    return s.status === filter;
-  });
+  const filteredSessions = sessions.filter(s => filter === 'ALL' || s.status === filter);
+
+  const statusColors = {
+    COMPLETED: 'badge-primary',
+    ACCEPTED: 'badge-teal',
+    REQUESTED: 'badge-accent',
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      
-      {/* Header Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/40 p-8 border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div className="max-w-3xl space-y-3">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-mono font-semibold">
-            <Calendar className="w-3.5 h-3.5 text-teal-400" />
-            <span>1:1 Session Management</span>
+    <div className="space-y-6 animate-fade-in">
+
+      {/* ── Hero ── */}
+      <div className="relative rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-900/30 via-surface-raised to-surface-raised" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-teal-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
+        <div className="relative z-10 p-6 sm:p-10">
+          <div className="max-w-3xl space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300 text-xs font-medium">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Session Center</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-heading font-bold text-white leading-tight">
+              Your Skill Swap <span className="text-gradient-teal">Sessions</span>
+            </h1>
+            <p className="text-gray-400 text-sm max-w-xl">
+              Manage appointments, review AI agendas, and leave peer reviews.
+            </p>
           </div>
-
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight font-heading">
-            Scheduled Skill Swaps & <br />
-            <span className="bg-gradient-to-r from-teal-400 via-sky-400 to-amber-300 bg-clip-text text-transparent">
-              AI Prep Agendas
-            </span>
-          </h1>
-
-          <p className="text-slate-300 text-sm leading-relaxed">
-            Manage your peer swap appointments, review AI-generated prep agendas, join video rooms, and post post-session reviews to level up your XP rating.
-          </p>
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex space-x-2 border-b border-slate-800 pb-3 font-mono text-xs">
+      {/* ── Filter Tabs ── */}
+      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
         {['ALL', 'REQUESTED', 'ACCEPTED', 'COMPLETED'].map((st) => (
           <button
             key={st}
             onClick={() => setFilter(st)}
-            className={`px-4 py-2 rounded-xl transition-all font-semibold ${
+            className={`px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               filter === st
-                ? 'bg-teal-500 text-slate-950 shadow-md shadow-teal-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                ? 'bg-primary-600 text-white shadow-glow-sm'
+                : 'bg-surface-raised border border-white/[0.04] text-gray-400 hover:text-white hover:border-white/[0.08]'
             }`}
           >
             {st} ({sessions.filter(s => st === 'ALL' || s.status === st).length})
@@ -133,101 +120,82 @@ export default function SessionsPage() {
         ))}
       </div>
 
-      {/* Sessions Grid */}
+      {/* ── Sessions Grid ── */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-64 bg-slate-900/60 rounded-3xl border border-slate-800 animate-pulse p-6" />
+            <div key={i} className="h-64 bg-surface-raised rounded-2xl border border-white/[0.04] animate-pulse shimmer" />
           ))}
         </div>
       ) : filteredSessions.length === 0 ? (
-        <div className="text-center py-16 bg-slate-900/40 rounded-3xl border border-slate-800 p-8 space-y-4">
-          <Calendar className="w-12 h-12 text-slate-600 mx-auto" />
-          <h3 className="text-lg font-bold text-slate-300">No sessions match filter</h3>
-          <p className="text-sm text-slate-500">Book a session with a peer from the Discover tab!</p>
+        <div className="text-center py-16 bg-surface-raised rounded-2xl border border-white/[0.04] space-y-3">
+          <Calendar className="w-10 h-10 text-gray-700 mx-auto" />
+          <h3 className="text-base font-semibold text-gray-300 font-heading">No sessions found</h3>
+          <p className="text-xs text-gray-500">Book a session from the Discover page!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {filteredSessions.map((session) => {
             const partner = session.hostId === activeDemoPersona.id ? session.learner : session.host;
             const isHost = session.hostId === activeDemoPersona.id;
-            const aiAgenda = JSON.parse(session.aiAgendaJson || '[]');
-            const aiSummary = session.aiSummaryJson ? JSON.parse(session.aiSummaryJson) : null;
 
             return (
               <div
                 key={session.id}
-                className="bg-slate-900/80 border border-slate-800 hover:border-teal-500/40 rounded-3xl p-6 transition-all space-y-5 flex flex-col justify-between"
+                className="glass-card rounded-2xl p-5 flex flex-col justify-between"
               >
                 <div className="space-y-4">
-                  
-                  {/* Top Bar */}
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center gap-3">
                       <img
-                        src={partner?.profile?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${partner?.profile?.username}`}
+                        src={partner?.profile?.avatarUrl}
                         alt={partner?.profile?.fullName}
-                        className="w-12 h-12 rounded-2xl bg-slate-950 border border-slate-700"
+                        className="w-11 h-11 rounded-xl bg-surface-DEFAULT border border-white/[0.06]"
                       />
                       <div>
-                        <h3 className="font-heading font-bold text-base text-white">
+                        <h3 className="font-heading font-semibold text-sm text-white">
                           {partner?.profile?.fullName}
                         </h3>
-                        <p className="text-xs text-teal-400 font-mono">
-                          {isHost ? 'Role: Mentor / Host' : 'Role: Learner'} • {session.skill?.name}
+                        <p className="text-xs text-primary-400 font-mono">
+                          {isHost ? 'Host' : 'Learner'} · {session.skill?.name}
                         </p>
                       </div>
                     </div>
-
-                    <span
-                      className={`px-3 py-1 rounded-full text-[10px] font-mono uppercase font-bold ${
-                        session.status === 'COMPLETED'
-                          ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                          : session.status === 'ACCEPTED'
-                          ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                      }`}
-                    >
+                    <span className={`${statusColors[session.status] || 'badge-primary'} !text-[10px] font-mono uppercase`}>
                       {session.status}
                     </span>
                   </div>
 
-                  {/* Date & Meeting URL */}
-                  <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-2 text-xs">
-                    <div className="flex items-center justify-between text-slate-300 font-mono">
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-teal-400" />
+                  <div className="p-3.5 rounded-xl bg-surface-DEFAULT border border-white/[0.04] space-y-2 text-xs">
+                    <div className="flex items-center justify-between text-gray-300 font-mono">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-primary-400" />
                         <span>{new Date(session.startTime).toLocaleString()}</span>
                       </div>
-                      <span className="text-slate-500">{session.durationMins} mins</span>
+                      <span className="text-gray-500">{session.durationMins} mins</span>
                     </div>
-
                     {session.notes && (
-                      <p className="text-slate-400 italic text-[11px] pt-1">"{session.notes}"</p>
+                      <p className="text-gray-500 italic text-[11px] pt-1">"{session.notes}"</p>
                     )}
                   </div>
                 </div>
 
-                {/* Actions Footer */}
-                <div className="pt-3 border-t border-slate-800/80 space-y-2">
-                  
+                <div className="pt-4 border-t border-white/[0.04] space-y-2 mt-4">
                   <div className="grid grid-cols-2 gap-2">
-                    {/* AI Agenda Button */}
                     <button
                       onClick={() => setPrepModalSession(session)}
-                      className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors"
+                      className="btn-secondary !py-2 !text-xs flex items-center justify-center gap-1.5 !rounded-lg"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-                      <span>AI Prep Agenda</span>
+                      <Sparkles className="w-3.5 h-3.5 text-primary-400" />
+                      <span>AI Prep</span>
                     </button>
 
-                    {/* Join Meeting / Summary Button */}
                     {session.status === 'ACCEPTED' ? (
                       <a
                         href={session.meetingUrl || '#'}
                         target="_blank"
                         rel="noreferrer"
-                        className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-teal-500 to-sky-500 text-slate-950 text-xs font-bold flex items-center justify-center space-x-1.5 transition-all shadow-md shadow-teal-500/10"
+                        className="btn-primary !py-2 !text-xs flex items-center justify-center gap-1.5 !rounded-lg"
                       >
                         <Video className="w-3.5 h-3.5" />
                         <span>Join Room</span>
@@ -238,7 +206,7 @@ export default function SessionsPage() {
                           if (session.aiSummaryJson) setSummaryModalSession(session);
                           else handleGenerateSummary(session.id);
                         }}
-                        className="py-2.5 px-3 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-bold flex items-center justify-center space-x-1.5 hover:bg-teal-500/20 transition-all"
+                        className="btn-secondary !py-2 !text-xs flex items-center justify-center gap-1.5 !rounded-lg !border-primary-500/20 !text-primary-300"
                       >
                         <FileText className="w-3.5 h-3.5" />
                         <span>AI Summary</span>
@@ -246,34 +214,32 @@ export default function SessionsPage() {
                     ) : (
                       <button
                         onClick={() => handleUpdateStatus(session.id, 'ACCEPTED')}
-                        className="py-2.5 px-3 rounded-xl bg-teal-500 text-slate-950 text-xs font-bold flex items-center justify-center space-x-1.5 transition-all"
+                        className="btn-primary !py-2 !text-xs flex items-center justify-center gap-1.5 !rounded-lg"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Accept Session</span>
+                        <span>Accept</span>
                       </button>
                     )}
                   </div>
 
-                  {/* Secondary Actions: Complete / Leave Review */}
                   {session.status === 'ACCEPTED' && (
                     <button
                       onClick={() => handleUpdateStatus(session.id, 'COMPLETED')}
-                      className="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-medium transition-colors"
+                      className="w-full py-2 rounded-lg bg-surface-overlay hover:bg-gray-600/30 text-primary-300 text-xs font-medium transition-colors"
                     >
-                      Mark Session Completed (+150 XP)
+                      Mark Completed (+150 XP)
                     </button>
                   )}
 
                   {session.status === 'COMPLETED' && (
                     <button
                       onClick={() => setReviewModalSession(session)}
-                      className="w-full py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20 text-xs font-medium flex items-center justify-center space-x-1 transition-colors"
+                      className="w-full py-2 rounded-lg bg-accent-500/10 border border-accent-500/20 text-accent-300 hover:bg-accent-500/20 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
                     >
-                      <Star className="w-3.5 h-3.5 fill-amber-400" />
-                      <span>Leave Peer Review</span>
+                      <Star className="w-3.5 h-3.5 fill-accent-400" />
+                      <span>Leave Review</span>
                     </button>
                   )}
-
                 </div>
               </div>
             );
@@ -281,176 +247,134 @@ export default function SessionsPage() {
         </div>
       )}
 
-      {/* AI PREP AGENDA MODAL */}
+      {/* ── AI Prep Modal ── */}
       {prepModalSession && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-6 shadow-2xl relative animate-in zoom-in-95">
-            <button
-              onClick={() => setPrepModalSession(null)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center space-x-3">
-              <div className="p-3 rounded-2xl bg-teal-500/10 border border-teal-500/30 text-teal-400">
-                <Sparkles className="w-6 h-6" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={(e) => e.target === e.currentTarget && setPrepModalSession(null)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative w-full max-w-lg bg-surface-raised border border-white/[0.08] rounded-2xl shadow-elevated animate-scale-in overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-primary-500 to-teal-400" />
+            <div className="p-6 space-y-5">
+              <button onClick={() => setPrepModalSession(null)} className="absolute top-5 right-5 p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/[0.06]">
+                <X className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-primary-600/15 border border-primary-500/25 text-primary-400">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-base font-bold text-white">AI Session Prep</h3>
+                  <p className="text-xs text-gray-500">Topic: {prepModalSession.skill?.name}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-heading text-lg font-bold text-white">AI Session Prep Agenda</h3>
-                <p className="text-xs text-slate-400">Skill Topic: {prepModalSession.skill?.name}</p>
-              </div>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div className="space-y-2">
-                <span className="font-mono text-[10px] text-slate-400 uppercase tracking-wider block">
-                  Structured Time Agenda (60 Mins):
-                </span>
+              <div className="space-y-2 text-xs">
+                <span className="text-[10px] font-mono text-gray-500 uppercase tracking-wider font-semibold">Agenda Items</span>
                 {JSON.parse(prepModalSession.aiAgendaJson || '[]').map((item, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-slate-950 border border-slate-800/80 text-slate-200 font-medium">
-                    {item}
-                  </div>
+                  <div key={i} className="p-3 rounded-xl bg-surface-DEFAULT border border-white/[0.04] text-gray-200 font-medium">{item}</div>
                 ))}
               </div>
+              <button onClick={() => setPrepModalSession(null)} className="w-full btn-primary !py-3">Close</button>
             </div>
-
-            <button
-              onClick={() => setPrepModalSession(null)}
-              className="w-full py-3 bg-teal-500 text-slate-950 font-bold rounded-2xl text-xs"
-            >
-              Close Prep Agenda
-            </button>
           </div>
         </div>
       )}
 
-      {/* AI POST-SESSION SUMMARY MODAL */}
+      {/* ── AI Summary Modal ── */}
       {summaryModalSession && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-6 shadow-2xl relative animate-in zoom-in-95">
-            <button
-              onClick={() => setSummaryModalSession(null)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center space-x-3">
-              <div className="p-3 rounded-2xl bg-teal-500/10 border border-teal-500/30 text-teal-400">
-                <FileText className="w-6 h-6" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={(e) => e.target === e.currentTarget && setSummaryModalSession(null)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative w-full max-w-lg bg-surface-raised border border-white/[0.08] rounded-2xl shadow-elevated animate-scale-in overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-teal-400 to-primary-500" />
+            <div className="p-6 space-y-5">
+              <button onClick={() => setSummaryModalSession(null)} className="absolute top-5 right-5 p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/[0.06]">
+                <X className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-teal-600/15 border border-teal-500/25 text-teal-400">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-base font-bold text-white">AI Summary</h3>
+                  <p className="text-xs text-gray-500">Takeaways & Action Items</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-heading text-lg font-bold text-white">AI Post-Session Summary</h3>
-                <p className="text-xs text-slate-400">Takeaways & Action Plan</p>
-              </div>
-            </div>
-
-            <div className="space-y-4 text-xs">
               {summaryModalSession.aiSummaryJson && (() => {
                 const data = JSON.parse(summaryModalSession.aiSummaryJson);
                 return (
-                  <>
-                    <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200">
-                      <span className="font-mono text-[10px] text-teal-400 uppercase block mb-1">Overview:</span>
+                  <div className="space-y-4 text-xs">
+                    <div className="p-4 rounded-xl bg-surface-DEFAULT border border-white/[0.04] text-gray-200">
+                      <span className="text-[10px] font-mono text-primary-400 uppercase block mb-1 font-semibold">Overview</span>
                       {data.summary}
                     </div>
-
                     <div className="space-y-2">
-                      <span className="font-mono text-[10px] text-slate-400 uppercase tracking-wider block">
-                        Action Items:
-                      </span>
+                      <span className="text-[10px] font-mono text-gray-500 uppercase tracking-wider font-semibold">Action Items</span>
                       {(data.actionItems || []).map((act, i) => (
-                        <div key={i} className="flex items-center space-x-2 text-slate-300 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/50">
-                          <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+                        <div key={i} className="flex items-center gap-2 text-gray-300 p-3 rounded-xl bg-surface-DEFAULT border border-white/[0.04]">
+                          <CheckCircle2 className="w-4 h-4 text-success-400 shrink-0" />
                           <span>{act}</span>
                         </div>
                       ))}
                     </div>
-                  </>
+                  </div>
                 );
               })()}
+              <button onClick={() => setSummaryModalSession(null)} className="w-full btn-primary !py-3">Done</button>
             </div>
-
-            <button
-              onClick={() => setSummaryModalSession(null)}
-              className="w-full py-3 bg-teal-500 text-slate-950 font-bold rounded-2xl text-xs"
-            >
-              Done
-            </button>
           </div>
         </div>
       )}
 
-      {/* LEAVE REVIEW MODAL */}
+      {/* ── Review Modal ── */}
       {reviewModalSession && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative animate-in zoom-in-95">
-            <button
-              onClick={() => setReviewModalSession(null)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center space-x-3">
-              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                <Star className="w-6 h-6 fill-amber-400" />
-              </div>
-              <div>
-                <h3 className="font-heading text-lg font-bold text-white">Rate & Review Peer</h3>
-                <p className="text-xs text-slate-400">Help maintain community reputation</p>
-              </div>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-400 font-mono text-[10px] uppercase mb-2">
-                  Star Rating (1 to 5 Stars)
-                </label>
-                <div className="flex items-center space-x-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRating(star)}
-                      className="p-2 transition-transform hover:scale-110"
-                    >
-                      <Star
-                        className={`w-7 h-7 ${
-                          star <= rating ? 'text-amber-400 fill-amber-400' : 'text-slate-700'
-                        }`}
-                      />
-                    </button>
-                  ))}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={(e) => e.target === e.currentTarget && setReviewModalSession(null)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="relative w-full max-w-md bg-surface-raised border border-white/[0.08] rounded-2xl shadow-elevated animate-scale-in overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-accent-400 to-accent-600" />
+            <div className="p-6 space-y-5">
+              <button onClick={() => setReviewModalSession(null)} className="absolute top-5 right-5 p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-white/[0.06]">
+                <X className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-accent-500/15 border border-accent-500/25 text-accent-400">
+                  <Star className="w-5 h-5 fill-accent-400" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-base font-bold text-white">Rate Your Peer</h3>
+                  <p className="text-xs text-gray-500">Help build community trust</p>
                 </div>
               </div>
-
-              <div>
-                <label className="block text-slate-400 font-mono text-[10px] uppercase mb-1">
-                  Feedback Comment
-                </label>
-                <textarea
-                  value={reviewComment}
-                  onChange={(e) => setReviewComment(e.target.value)}
-                  rows={3}
-                  placeholder="Share how helpful your session partner was..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-amber-400"
-                />
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs text-gray-400 font-medium mb-2">Rating</label>
+                  <div className="flex items-center gap-1.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button key={star} type="button" onClick={() => setRating(star)} className="p-0.5 transition-transform hover:scale-110">
+                        <Star className={`w-7 h-7 ${star <= rating ? 'text-accent-400 fill-accent-400' : 'text-gray-700'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 font-medium mb-1.5">Feedback</label>
+                  <textarea
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    rows={3}
+                    placeholder="Share your experience..."
+                    className="input-field resize-none"
+                  />
+                </div>
               </div>
+              <button
+                onClick={handleSubmitReview}
+                disabled={reviewSubmitting}
+                className="w-full py-3 rounded-xl bg-accent-500 hover:bg-accent-400 text-surface-DEFAULT font-bold text-xs transition-all disabled:opacity-50"
+              >
+                {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
+              </button>
             </div>
-
-            <button
-              onClick={handleSubmitReview}
-              disabled={reviewSubmitting}
-              className="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-bold rounded-2xl text-xs shadow-lg shadow-amber-500/20"
-            >
-              {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
-            </button>
           </div>
         </div>
       )}
-
     </div>
   );
 }

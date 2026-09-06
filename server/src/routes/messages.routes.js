@@ -27,7 +27,44 @@ router.get('/conversations', authenticateToken, async (req, res) => {
       orderBy: { lastMessageAt: 'desc' }
     });
 
-    res.json({ conversations });
+// POST /api/conversations - Find or create conversation with targetUserId
+router.post('/conversations', authenticateToken, async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { targetUserId } = req.body;
+    if (!targetUserId) return res.status(400).json({ error: 'targetUserId is required' });
+
+    // Check if conversation already exists between req.user.id and targetUserId
+    let conversation = await prisma.conversation.findFirst({
+      where: {
+        AND: [
+          { participants: { some: { id: req.user.id } } },
+          { participants: { some: { id: targetUserId } } }
+        ]
+      },
+      include: {
+        participants: { include: { profile: true } },
+        messages: { take: 1, orderBy: { createdAt: 'desc' } }
+      }
+    });
+
+    if (!conversation) {
+      conversation = await prisma.conversation.create({
+        data: {
+          participants: {
+            connect: [{ id: req.user.id }, { id: targetUserId }]
+          },
+          lastMessageAt: new Date()
+        },
+        include: {
+          participants: { include: { profile: true } },
+          messages: { take: 1, orderBy: { createdAt: 'desc' } }
+        }
+      });
+    }
+
+    res.json({ conversation });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

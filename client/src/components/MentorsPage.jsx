@@ -1,130 +1,104 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api.js';
 import { useStore } from '../store/useStore.js';
-import { Award, Star, Calendar, ShieldCheck, CheckCircle2, DollarSign } from 'lucide-react';
+import { Award, Star, Calendar, ShieldCheck } from 'lucide-react';
 
 export default function MentorsPage() {
-  const { activeDemoPersona, setActiveTab, showToast } = useStore();
+  const { activeDemoPersona, setActiveTab } = useStore();
   const [mentors, setMentors] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchMentors();
-  }, [activeDemoPersona]);
+  useEffect(() => { fetchMentors(); }, [activeDemoPersona]);
 
   const fetchMentors = async () => {
     setLoading(true);
     try {
       const res = await api.get('/users', { params: { isMentor: 'true' } });
       setMentors(res.data.users || []);
-    } catch (err) {
-      console.error('Fetch mentors error:', err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error('Fetch mentors error:', err); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
-      
-      {/* Header Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-purple-950/30 p-8 border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div className="max-w-3xl space-y-4">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-mono font-semibold">
-            <Award className="w-3.5 h-3.5 text-purple-400" />
-            <span>Verified Mentor Marketplace</span>
+    <div className="space-y-6 animate-fade-in">
+
+      {/* ── Hero ── */}
+      <div className="relative rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-accent-700/20 via-surface-raised to-surface-raised" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-accent-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
+        <div className="relative z-10 p-6 sm:p-10">
+          <div className="max-w-3xl space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-500/10 border border-accent-500/20 text-accent-300 text-xs font-medium">
+              <Award className="w-3.5 h-3.5" />
+              <span>Verified Mentors</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-heading font-bold text-white leading-tight">
+              Learn from <span className="text-gradient-warm">Industry Experts</span>
+            </h1>
+            <p className="text-gray-400 text-sm max-w-xl">
+              Book 1:1 mentoring sessions for architecture reviews, portfolio breakdowns, and career coaching.
+            </p>
           </div>
-
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight font-heading">
-            Learn 1:1 from Industry Experts & <br />
-            <span className="bg-gradient-to-r from-purple-400 via-sky-400 to-teal-300 bg-clip-text text-transparent">
-              Senior Tech Leaders
-            </span>
-          </h1>
-
-          <p className="text-slate-300 text-sm leading-relaxed">
-            Book structured mentoring sessions for code reviews, system architecture audits, portfolio breakdowns, and career coaching.
-          </p>
         </div>
       </div>
 
-      {/* Mentors Grid */}
+      {/* ── Grid ── */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-72 bg-slate-900/60 rounded-3xl border border-slate-800 animate-pulse p-6" />
+            <div key={i} className="h-72 bg-surface-raised rounded-2xl border border-white/[0.04] animate-pulse shimmer" />
           ))}
         </div>
       ) : mentors.length === 0 ? (
-        <div className="text-center py-16 bg-slate-900/40 rounded-3xl border border-slate-800 p-8">
-          <Award className="w-12 h-12 text-slate-600 mx-auto" />
-          <h3 className="text-lg font-bold text-slate-300">No verified mentors currently listed</h3>
+        <div className="text-center py-16 bg-surface-raised rounded-2xl border border-white/[0.04] space-y-3">
+          <Award className="w-10 h-10 text-gray-700 mx-auto" />
+          <h3 className="text-base font-semibold text-gray-300 font-heading">No mentors listed yet</h3>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {mentors.map((mentor) => {
             const teachSkills = mentor.skills?.filter(s => s.type === 'TEACH') || [];
             const rate = mentor.profile?.hourlyRate || 0;
 
             return (
-              <div
-                key={mentor.id}
-                className="bg-slate-900/80 border border-slate-800 hover:border-purple-500/40 rounded-3xl p-6 transition-all space-y-5 flex flex-col justify-between"
-              >
+              <div key={mentor.id} className="glass-card rounded-2xl p-5 flex flex-col justify-between">
                 <div className="space-y-4">
-                  {/* Top Header */}
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3.5">
+                    <div className="flex items-center gap-3">
                       <img
                         src={mentor.profile?.avatarUrl}
                         alt={mentor.profile?.fullName}
-                        className="w-14 h-14 rounded-2xl bg-slate-950 border border-slate-700"
+                        className="w-12 h-12 rounded-xl bg-surface-DEFAULT border border-white/[0.06] group-hover:scale-105 transition-transform"
                       />
                       <div>
-                        <div className="flex items-center space-x-1">
-                          <h3 className="font-heading font-bold text-base text-white">
-                            {mentor.profile?.fullName}
-                          </h3>
-                          <ShieldCheck className="w-4 h-4 text-purple-400 inline" />
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-heading font-semibold text-sm text-white">{mentor.profile?.fullName}</h3>
+                          <ShieldCheck className="w-3.5 h-3.5 text-accent-400" />
                         </div>
-                        <p className="text-xs text-slate-400 line-clamp-1">{mentor.profile?.headline}</p>
-                        
-                        <div className="flex items-center space-x-2 mt-1">
-                          <div className="flex items-center text-amber-400 text-xs font-mono font-semibold">
-                            <Star className="w-3.5 h-3.5 fill-amber-400 mr-1" />
-                            <span>{mentor.profile?.rating || 5.0}</span>
-                            <span className="text-slate-500 ml-1">({mentor.profile?.reviewCount || 0})</span>
+                        <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{mentor.profile?.headline}</p>
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <div className="flex items-center text-accent-400 text-xs font-medium">
+                            <Star className="w-3 h-3 fill-accent-400 mr-0.5" />
+                            <span>{mentor.profile?.rating || '5.0'}</span>
+                            <span className="text-gray-600 ml-0.5">({mentor.profile?.reviewCount || 0})</span>
                           </div>
                         </div>
                       </div>
                     </div>
-
-                    {/* Hourly Rate */}
-                    <div className="text-right font-mono">
-                      <span className="text-lg font-bold text-purple-300">
-                        {rate > 0 ? `$${rate}/hr` : 'Free Swap'}
-                      </span>
-                    </div>
+                    <span className="font-mono text-sm font-bold text-accent-300">
+                      {rate > 0 ? `$${rate}/hr` : 'Free'}
+                    </span>
                   </div>
 
-                  {/* Bio */}
-                  <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
-                    {mentor.profile?.bio}
-                  </p>
+                  <p className="text-xs text-gray-400 line-clamp-3 leading-relaxed">{mentor.profile?.bio}</p>
 
-                  {/* Skills */}
                   <div>
-                    <span className="text-[10px] font-mono uppercase text-slate-400 block mb-1.5">
-                      Mentoring Expertise:
+                    <span className="text-[10px] font-mono uppercase text-gray-500 font-semibold tracking-wider block mb-1.5">
+                      Expertise
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       {teachSkills.map((us) => (
-                        <span
-                          key={us.id}
-                          className="px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium"
-                        >
-                          {us.skill?.name}
-                        </span>
+                        <span key={us.id} className="badge-accent !text-[10px]">{us.skill?.name}</span>
                       ))}
                     </div>
                   </div>
@@ -132,17 +106,16 @@ export default function MentorsPage() {
 
                 <button
                   onClick={() => setActiveTab('discover')}
-                  className="w-full py-3 bg-gradient-to-r from-purple-500 to-sky-500 text-slate-950 font-bold rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-purple-500/20"
+                  className="w-full btn-primary !py-2.5 !text-xs flex items-center justify-center gap-2 !rounded-lg mt-5"
                 >
-                  <Calendar className="w-4 h-4" />
-                  <span>Request 1:1 Mentorship</span>
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Request Mentorship</span>
                 </button>
               </div>
             );
           })}
         </div>
       )}
-
     </div>
   );
 }

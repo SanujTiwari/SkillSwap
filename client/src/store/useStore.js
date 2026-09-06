@@ -43,7 +43,7 @@ export const useStore = create((set, get) => ({
   activeTab: 'discover',
   setActiveTab: (tab) => set({ activeTab: tab }),
 
-  currentDemoUserId: null, // Populated after fetching seed user
+  currentDemoUserId: null,
   currentUser: null,
   setCurrentUser: (user) => set({ currentUser: user, currentDemoUserId: user?.id || null }),
 
@@ -51,7 +51,22 @@ export const useStore = create((set, get) => ({
   activeDemoPersona: DEMO_PERSONAS[0],
   switchDemoPersona: (persona) => {
     set({ activeDemoPersona: persona });
-    // Refetch user context from API with new x-demo-user-id header
+  },
+
+  // Auth Modal State
+  authModalOpen: false,
+  authModalMode: 'login', // 'login' | 'signup'
+  setAuthModalOpen: (open, mode = 'login') => set({ authModalOpen: open, authModalMode: mode }),
+  
+  authToken: localStorage.getItem('skillswap_token') || null,
+  setAuthToken: (token) => {
+    if (token) localStorage.setItem('skillswap_token', token);
+    else localStorage.removeItem('skillswap_token');
+    set({ authToken: token });
+  },
+  logoutUser: () => {
+    localStorage.removeItem('skillswap_token');
+    set({ authToken: null, currentUser: null });
   },
 
   // Modals
@@ -61,10 +76,10 @@ export const useStore = create((set, get) => ({
   bookingTargetUser: null,
   setBookingTargetUser: (user) => set({ bookingTargetUser: user }),
 
-  sessionPrepModal: null, // session object
+  sessionPrepModal: null,
   setSessionPrepModal: (session) => set({ sessionPrepModal: session }),
 
-  sessionSummaryModal: null, // session object
+  sessionSummaryModal: null,
   setSessionSummaryModal: (session) => set({ sessionSummaryModal: session }),
 
   toastMessage: null,

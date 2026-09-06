@@ -226,6 +226,27 @@ async function main() {
       teachSkills: [{ name: 'Node.js', level: 'EXPERT', yrs: 7 }, { name: 'PostgreSQL', level: 'EXPERT', yrs: 8 }, { name: 'Express.js', level: 'EXPERT', yrs: 6 }],
       learnSkills: [{ name: 'Figma', level: 'BEGINNER' }, { name: 'Prompt Engineering', level: 'INTERMEDIATE' }],
       ninetyDayGoal: 'Master AI Prompt Engineering & GenAI Architectures'
+    },
+    {
+      email: 'priya.patel@skillswap.dev',
+      fullName: 'Priya Patel',
+      username: 'priya_ai',
+      headline: 'AI Product Lead | Prompt Engineering & Python',
+      bio: 'Leading LLM product integrations. Excited to teach Prompt Engineering and Python while sharpening product management & public speaking.',
+      location: 'London, UK',
+      timezone: 'Europe/London',
+      hourlyRate: 50,
+      isMentor: true,
+      totalXp: 1800,
+      level: 8,
+      reputationScore: 4.97,
+      rating: 4.95,
+      reviewCount: 22,
+      completedSessions: 26,
+      learningStreak: 15,
+      teachSkills: [{ name: 'Prompt Engineering', level: 'EXPERT', yrs: 3 }, { name: 'Python', level: 'ADVANCED', yrs: 5 }],
+      learnSkills: [{ name: 'React', level: 'BEGINNER' }],
+      ninetyDayGoal: 'Launch an AI-powered developer tool'
     }
   ];
 
@@ -308,19 +329,47 @@ async function main() {
   // 5. CONNECTIONS & CONVERSATIONS
   const userA = createdUsers['aarav_sharma'];
   const userE = createdUsers['elena_design'];
+  const userM = createdUsers['marcus_backend'];
+  const userP = createdUsers['priya_ai'];
 
   const connectionAE = await prisma.connection.create({
-    data: {
-      requesterId: userA.id,
-      receiverId: userE.id,
-      status: 'ACCEPTED'
-    }
+    data: { requesterId: userA.id, receiverId: userE.id, status: 'ACCEPTED' }
+  });
+  const connectionAM = await prisma.connection.create({
+    data: { requesterId: userA.id, receiverId: userM.id, status: 'ACCEPTED' }
+  });
+  const connectionME = await prisma.connection.create({
+    data: { requesterId: userM.id, receiverId: userE.id, status: 'ACCEPTED' }
+  });
+  const connectionMP = await prisma.connection.create({
+    data: { requesterId: userM.id, receiverId: userP.id, status: 'ACCEPTED' }
   });
 
   const conversationAE = await prisma.conversation.create({
     data: {
       participants: { connect: [{ id: userA.id }, { id: userE.id }] },
       lastMessageAt: new Date()
+    }
+  });
+
+  const conversationAM = await prisma.conversation.create({
+    data: {
+      participants: { connect: [{ id: userA.id }, { id: userM.id }] },
+      lastMessageAt: new Date(Date.now() - 1800000)
+    }
+  });
+
+  const conversationME = await prisma.conversation.create({
+    data: {
+      participants: { connect: [{ id: userM.id }, { id: userE.id }] },
+      lastMessageAt: new Date(Date.now() - 3600000 * 3)
+    }
+  });
+
+  const conversationMP = await prisma.conversation.create({
+    data: {
+      participants: { connect: [{ id: userM.id }, { id: userP.id }] },
+      lastMessageAt: new Date(Date.now() - 3600000 * 5)
     }
   });
 
@@ -337,12 +386,49 @@ async function main() {
         senderId: userE.id,
         content: "Hey Aarav! Perfect match. Let's schedule a 60-min session this week!",
         createdAt: new Date(Date.now() - 3600000 * 24)
+      },
+      {
+        conversationId: conversationAM.id,
+        senderId: userA.id,
+        content: "Hi Marcus! Ready for our Node.js & Express session?",
+        createdAt: new Date(Date.now() - 3600000 * 2)
+      },
+      {
+        conversationId: conversationAM.id,
+        senderId: userM.id,
+        content: "Hey Aarav! Absolutely, I have the backend setup ready for us to work on.",
+        createdAt: new Date(Date.now() - 1800000)
+      },
+      {
+        conversationId: conversationME.id,
+        senderId: userM.id,
+        content: "Hi Elena, can you review our new dashboard Figma components?",
+        createdAt: new Date(Date.now() - 3600000 * 4)
+      },
+      {
+        conversationId: conversationME.id,
+        senderId: userE.id,
+        content: "Sure Marcus! Leaving comments in Figma right now.",
+        createdAt: new Date(Date.now() - 3600000 * 3)
+      },
+      {
+        conversationId: conversationMP.id,
+        senderId: userP.id,
+        content: "Marcus, loved your article on PostgreSQL index tuning!",
+        createdAt: new Date(Date.now() - 3600000 * 6)
+      },
+      {
+        conversationId: conversationMP.id,
+        senderId: userM.id,
+        content: "Thanks Priya! Would love to learn more about LLM prompt optimization from you.",
+        createdAt: new Date(Date.now() - 3600000 * 5)
       }
     ]
   });
 
   // 6. SESSIONS & REVIEWS
   const reactSkillId = skillNameToIdMap['React'];
+  const nodeSkillId = skillNameToIdMap['Node.js'];
 
   const completedSession = await prisma.session.create({
     data: {
@@ -355,7 +441,7 @@ async function main() {
       endTime: new Date(Date.now() - 3600000 * 47),
       durationMins: 60,
       price: 0,
-      meetingUrl: 'https://meet.skillswap.dev/room-aarav-elena-react',
+      meetingUrl: 'https://meet.jit.si/skillswap-room-aarav-elena-react',
       notes: 'Covered React custom hooks and state synchronization.',
       aiAgendaJson: JSON.stringify([
         '1. Icebreaker & React basics (10m)',
@@ -366,6 +452,27 @@ async function main() {
         summary: 'Elena mastered React useState, useEffect, and custom hooks patterns.',
         actionItems: ['Practice building a theme toggle hook', 'Schedule follow-up Figma review']
       })
+    }
+  });
+
+  const acceptedSessionM = await prisma.session.create({
+    data: {
+      hostId: userM.id,
+      learnerId: userA.id,
+      skillId: nodeSkillId,
+      sessionType: 'SKILL_SWAP',
+      status: 'ACCEPTED',
+      startTime: new Date(Date.now() + 3600000 * 24),
+      endTime: new Date(Date.now() + 3600000 * 25),
+      durationMins: 60,
+      price: 0,
+      meetingUrl: 'https://meet.jit.si/skillswap-room-marcus-aarav-nodejs',
+      notes: 'Deep dive into Node.js async event loop and Express routes.',
+      aiAgendaJson: JSON.stringify([
+        '1. Event Loop Architecture (15m)',
+        '2. Building RESTful middleware (30m)',
+        '3. Error handling best practices (15m)'
+      ])
     }
   });
 
